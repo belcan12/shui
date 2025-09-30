@@ -1,0 +1,86 @@
+service: shui-board-api
+frameworkVersion: "4"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: eu-north-1
+
+  
+  httpApi:
+    cors:
+      allowedOrigins:
+        - "http://shui-belin-dev.s3-website.eu-north-1.amazonaws.com"               
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - OPTIONS
+
+  environment:
+    TABLE_NAME: ${self:service}-${sls:stage}-messages
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource:
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE_NAME}
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE_NAME}/index/UsernameIndex
+
+functions:
+  create:
+    handler: src/createMessage.handler
+    events:
+      - httpApi:
+          path: /messages
+          method: post
+
+  get:
+    handler: src/getMessages.handler
+    events:
+      - httpApi:
+          path: /messages
+          method: get
+
+  update:
+    handler: src/updateMessage.handler
+    events:
+      - httpApi:
+          path: /messages/{id}
+          method: put
+
+resources:
+  Resources:
+    MessagesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UsernameIndex
+            KeySchema:
+              - AttributeName: username
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
