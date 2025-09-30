@@ -1,14 +1,22 @@
 import { useEffect, useState } from "react";
 import { fetchMessages, createMessage, updateMessage } from "./api";
-import "./App.css";
+
+
 import "./index.css";
+import "./App.css";
 
 function formatDate(ts) {
-  try { return new Date(ts).toLocaleString("sv-SE", { dateStyle: "full", timeStyle: "short" }); }
-  catch { return String(ts); }
+  try {
+    return new Date(ts).toLocaleString("sv-SE", {
+      dateStyle: "full",
+      timeStyle: "short",
+    });
+  } catch {
+    return String(ts);
+  }
 }
 
-function LogoBadge({ small=false }) {
+function LogoBadge({ small = false }) {
   return (
     <div className={`logo-badge ${small ? "small" : ""}`}>
       <span>S</span>
@@ -20,6 +28,7 @@ export default function App() {
   const [view, setView] = useState("list"); // 'list' | 'new' | 'edit'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [messages, setMessages] = useState([]);
   const [sort, setSort] = useState("desc");
   const [filterUser, setFilterUser] = useState("");
@@ -43,9 +52,15 @@ export default function App() {
     }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [sort]);
+  useEffect(() => {
+    load(); // ladda vid mount + när sort ändras
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort]);
 
-  const onFilter = async (e) => { e.preventDefault(); await load(); };
+  const onFilter = async (e) => {
+    e.preventDefault();
+    await load();
+  };
 
   const onCreate = async (e) => {
     e.preventDefault();
@@ -56,7 +71,9 @@ export default function App() {
       setNewText("");
       setView("list");
       await load();
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      setError(e.message || "Kunde inte skapa meddelande");
+    }
   };
 
   const startEdit = (m) => {
@@ -72,11 +89,14 @@ export default function App() {
       await updateMessage(editId, { text: editText });
       setView("list");
       await load();
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      setError(e.message || "Kunde inte uppdatera meddelande");
+    }
   };
 
   return (
     <div className="page">
+      {/* Topbar */}
       <header className="topbar">
         <LogoBadge />
         <h1>Shui – Anslagstavla</h1>
@@ -101,47 +121,15 @@ export default function App() {
         </nav>
       </header>
 
+      {/* Felruta */}
       {error && <div className="alert">{error}</div>}
 
       {/* LIST VIEW */}
       {view === "list" && (
         <section className="content two-col">
+          {/* Vänsterkolumn – kortlista med pratbubblor */}
           <div className="col col--list">
-            {loading ? (
-              <p className="muted">Laddar…</p>
-            ) : messages.length === 0 ? (
-              <div className="empty">
-                <LogoBadge small />
-                <p>Du har inga meddelanden<br/>att visa.</p>
-                <div className="wave" />
-              </div>
-            ) : (
-              <ul className="cards">
-                {messages.map((m) => (
-                  <li key={m.id} className="card">
-                    <LogoBadge small />
-                    <div className="meta">
-                      <span className="date">{formatDate(m.createdAt)}</span>
-                    </div>
-                    <div className="bubble">
-                      <p className="text">{m.text}</p>
-                      <div className="tail" />
-                    </div>
-                    <div className="author">— {m.username}</div>
-                    <button className="fab" title="Redigera" onClick={() => startEdit(m)}>
-                      {/* litet penn-ikon i SVG */}
-                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                      </svg>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <aside className="col col--filter">
-            <form onSubmit={onFilter} className="panel">
+            <form onSubmit={onFilter} className="panel" style={{ marginBottom: 12 }}>
               <h3>Filtrera</h3>
               <label className="field">
                 <span>Användarnamn</span>
@@ -155,15 +143,70 @@ export default function App() {
 
               <label className="field">
                 <span>Sortering</span>
-                <select className="input" value={sort} onChange={(e) => setSort(e.target.value)}>
+                <select
+                  className="input"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
                   <option value="desc">Nyast först</option>
                   <option value="asc">Äldst först</option>
                 </select>
               </label>
 
-              <button type="submit" className="btn-primary full">Hämta</button>
+              <button type="submit" className="btn-primary full">
+                Hämta
+              </button>
             </form>
-          </aside>
+
+            {loading ? (
+              <p className="muted">Laddar…</p>
+            ) : messages.length === 0 ? (
+              <div className="empty">
+                <LogoBadge small />
+                <p>
+                  Du har inga meddelanden
+                  <br />
+                  att visa.
+                </p>
+                <div className="wave" />
+              </div>
+            ) : (
+              <ul className="cards">
+                {messages.map((m) => (
+                  <li key={m.id} className="card">
+                    {/* Lilla loggan placeras absolut (index.css styr) */}
+                    <LogoBadge small />
+
+                    <div className="meta">
+                      <span className="date">{formatDate(m.createdAt)}</span>
+                    </div>
+
+                    {/* Själva pratbubblan */}
+                    <div className="bubble">
+                      <p className="text">{m.text}</p>
+                      <div className="tail" />
+                    </div>
+
+                    <div className="author">— {m.username}</div>
+
+                    {/* Redigera-knapp */}
+                    <button
+                      className="fab"
+                      title="Redigera"
+                      onClick={() => startEdit(m)}
+                    >
+                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Högerkolumn */}
+          <aside className="col col--filter" />
         </section>
       )}
 
@@ -181,7 +224,9 @@ export default function App() {
                 rows={6}
                 required
               />
+              {/* Dekorativ svans under textarean */}
               <div className="bubble-tail" />
+
               <label className="field">
                 <span>Användarnamn</span>
                 <input
@@ -191,7 +236,10 @@ export default function App() {
                   required
                 />
               </label>
-              <button type="submit" className="btn-primary full">Publicera</button>
+
+              <button type="submit" className="btn-primary full">
+                Publicera
+              </button>
             </form>
           </div>
         </section>
@@ -207,6 +255,7 @@ export default function App() {
               <LogoBadge small />
               <form onSubmit={onUpdate} className="composer-form">
                 <div className="tiny muted">ID: {editId}</div>
+
                 <label className="field">
                   <span>Ny text</span>
                   <textarea
@@ -217,9 +266,18 @@ export default function App() {
                     required
                   />
                 </label>
+
                 <div className="row">
-                  <button type="submit" className="btn-primary">Uppdatera</button>
-                  <button type="button" className="btn-ghost" onClick={() => setView("list")}>Avbryt</button>
+                  <button type="submit" className="btn-primary">
+                    Uppdatera
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => setView("list")}
+                  >
+                    Avbryt
+                  </button>
                 </div>
               </form>
             </div>
