@@ -1,0 +1,8 @@
+/shui-backend/node_modules/
+/shui-backend/.serverless/
+/shui-frontend/node_modules/
+/shui-frontend/dist/
+.DS_Store
+Thumbs.db
+.env
+shui-frontend/.env
