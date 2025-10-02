@@ -10,23 +10,48 @@ module.exports.handler = async (event) => {
   let items = [];
 
   if (username) {
+    const uLower = username.toLowerCase();
+
     
-    const res = await ddb.send(
+    const resLower = await ddb.send(
       new QueryCommand({
         TableName: process.env.TABLE_NAME,
-        IndexName: "UsernameIndex",
-        KeyConditionExpression: "#u = :u",
-        ExpressionAttributeNames: { "#u": "username" },
-        ExpressionAttributeValues: { ":u": username },
-        ScanIndexForward: sort === "asc", 
+        IndexName: "UsernameLowerIndex",
+        KeyConditionExpression: "#ul = :ul",
+        ExpressionAttributeNames: { "#ul": "usernameLower" },
+        ExpressionAttributeValues: { ":ul": uLower },
+        ScanIndexForward: sort === "asc",
       })
     );
-    items = res.Items || [];
-  } else {
+    items = resLower.Items || [];
+
     
-    const res = await ddb.send(
-      new ScanCommand({ TableName: process.env.TABLE_NAME })
-    );
+    if (items.length === 0) {
+      const resOld = await ddb.send(
+        new QueryCommand({
+          TableName: process.env.TABLE_NAME,
+          IndexName: "UsernameIndex",
+          KeyConditionExpression: "#u = :u",
+          ExpressionAttributeNames: { "#u": "username" },
+          ExpressionAttributeValues: { ":u": username },
+          ScanIndexForward: sort === "asc",
+        })
+      );
+      items = resOld.Items || [];
+    }
+
+    
+    if (items.length === 0) {
+      const resScan = await ddb.send(new ScanCommand({ TableName: process.env.TABLE_NAME }));
+      items = (resScan.Items || []).filter(
+        (it) => typeof it.username === "string" && it.username.toLowerCase() === uLower
+      );
+      items.sort((a, b) =>
+        sort === "asc" ? a.createdAt - b.createdAt : b.createdAt - a.createdAt
+      );
+    }
+  } else {
+    const res = await ddb.send(new ScanCommand({ TableName: process.env.TABLE_NAME }));
     items = res.Items || [];
     items.sort((a, b) =>
       sort === "asc" ? a.createdAt - b.createdAt : b.createdAt - a.createdAt

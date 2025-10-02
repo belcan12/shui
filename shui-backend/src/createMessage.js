@@ -1,6 +1,6 @@
 const { PutCommand } = require("@aws-sdk/lib-dynamodb");
 const ddb = require("./dynamo");
-const { randomUUID } = require("crypto"); 
+const { randomUUID } = require("crypto");
 const { created, badRequest, serverError } = require("./response");
 
 module.exports.handler = async (event) => {
@@ -26,8 +26,9 @@ module.exports.handler = async (event) => {
 
     const now = Date.now();
     const item = {
-      id: randomUUID(),   
+      id: randomUUID(),
       username: u,
+      usernameLower: u.toLowerCase(),   
       text: t,
       createdAt: now,
     };

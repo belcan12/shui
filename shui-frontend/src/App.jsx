@@ -1,6 +1,6 @@
+
 import { useEffect, useState } from "react";
 import { fetchMessages, createMessage, updateMessage } from "./api";
-
 
 import "./index.css";
 import "./App.css";
@@ -16,11 +16,16 @@ function formatDate(ts) {
   }
 }
 
-function LogoBadge({ small = false }) {
+function LogoBadge({ small = false, onClick }) {
   return (
-    <div className={`logo-badge ${small ? "small" : ""}`}>
+    <button
+      className={`logo-badge ${small ? "small" : ""} logo-btn`}
+      type="button"
+      title="Till startsidan"
+      onClick={onClick}
+    >
       <span>S</span>
-    </div>
+    </button>
   );
 }
 
@@ -53,7 +58,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    load(); // ladda vid mount + när sort ändras
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sort]);
 
@@ -98,7 +103,7 @@ export default function App() {
     <div className="page">
       {/* Topbar */}
       <header className="topbar">
-        <LogoBadge />
+        <LogoBadge onClick={() => setView("list")} />
         <h1>Shui – Anslagstavla</h1>
         <nav className="nav">
           <button
@@ -127,14 +132,14 @@ export default function App() {
       {/* LIST VIEW */}
       {view === "list" && (
         <section className="content two-col">
-          {/* Vänsterkolumn – kortlista med pratbubblor */}
           <div className="col col--list">
             <form onSubmit={onFilter} className="panel" style={{ marginBottom: 12 }}>
               <h3>Filtrera</h3>
+
               <label className="field">
-                <span>Användarnamn</span>
+                <span className="label-white">Användarnamn</span>
                 <input
-                  className="input"
+                  className="input input--light"
                   placeholder="t.ex. Anna"
                   value={filterUser}
                   onChange={(e) => setFilterUser(e.target.value)}
@@ -142,9 +147,9 @@ export default function App() {
               </label>
 
               <label className="field">
-                <span>Sortering</span>
+                <span className="label-white">Sortering</span>
                 <select
-                  className="input"
+                  className="input input--light"
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
                 >
@@ -162,8 +167,7 @@ export default function App() {
               <p className="muted">Laddar…</p>
             ) : messages.length === 0 ? (
               <div className="empty">
-                <LogoBadge small />
-                <p>
+                <p className="empty-text">
                   Du har inga meddelanden
                   <br />
                   att visa.
@@ -174,14 +178,10 @@ export default function App() {
               <ul className="cards">
                 {messages.map((m) => (
                   <li key={m.id} className="card">
-                    {/* Lilla loggan placeras absolut (index.css styr) */}
-                    <LogoBadge small />
-
                     <div className="meta">
-                      <span className="date">{formatDate(m.createdAt)}</span>
+                      <span className="date-black">{formatDate(m.createdAt)}</span>
                     </div>
 
-                    {/* Själva pratbubblan */}
                     <div className="bubble">
                       <p className="text">{m.text}</p>
                       <div className="tail" />
@@ -189,9 +189,8 @@ export default function App() {
 
                     <div className="author">— {m.username}</div>
 
-                    {/* Redigera-knapp */}
                     <button
-                      className="fab"
+                      className="edit-btn"
                       title="Redigera"
                       onClick={() => startEdit(m)}
                     >
@@ -205,16 +204,30 @@ export default function App() {
             )}
           </div>
 
-          {/* Högerkolumn */}
           <aside className="col col--filter" />
         </section>
+      )}
+
+      {/* Flytande penna i list-vyn */}
+      {view === "list" && (
+        <button
+          className="compose-fab"
+          title="Nytt meddelande"
+          onClick={() => setView("new")}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+            />
+          </svg>
+        </button>
       )}
 
       {/* NEW VIEW */}
       {view === "new" && (
         <section className="content one-col">
           <div className="composer panel">
-            <LogoBadge small />
             <form onSubmit={onCreate} className="composer-form">
               <textarea
                 className="input text-area"
@@ -224,13 +237,11 @@ export default function App() {
                 rows={6}
                 required
               />
-              {/* Dekorativ svans under textarean */}
-              <div className="bubble-tail" />
 
               <label className="field">
-                <span>Användarnamn</span>
+                <span className="label-white">Användarnamn</span>
                 <input
-                  className="input"
+                  className="input input--light"
                   value={newUser}
                   onChange={(e) => setNewUser(e.target.value)}
                   required
@@ -252,12 +263,11 @@ export default function App() {
             <p className="muted">Välj först ett meddelande i listan.</p>
           ) : (
             <div className="composer panel">
-              <LogoBadge small />
-              <form onSubmit={onUpdate} className="composer-form">
-                <div className="tiny muted">ID: {editId}</div>
+              <div className="tiny muted">ID: {editId}</div>
 
+              <form onSubmit={onUpdate} className="composer-form">
                 <label className="field">
-                  <span>Ny text</span>
+                  <span className="label-white">Ny text</span>
                   <textarea
                     className="input text-area"
                     value={editText}

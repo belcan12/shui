@@ -6,7 +6,6 @@ provider:
   runtime: nodejs20.x
   region: eu-north-1
 
-  
   httpApi:
     cors:
       allowedOrigins:
@@ -36,6 +35,7 @@ provider:
           Resource:
             - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE_NAME}
             - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE_NAME}/index/UsernameIndex
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE_NAME}/index/UsernameLowerIndex
 
 functions:
   create:
@@ -71,6 +71,8 @@ resources:
             AttributeType: S
           - AttributeName: username
             AttributeType: S
+          - AttributeName: usernameLower
+            AttributeType: S
           - AttributeName: createdAt
             AttributeType: N
         KeySchema:
@@ -80,6 +82,14 @@ resources:
           - IndexName: UsernameIndex
             KeySchema:
               - AttributeName: username
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: UsernameLowerIndex
+            KeySchema:
+              - AttributeName: usernameLower
                 KeyType: HASH
               - AttributeName: createdAt
                 KeyType: RANGE
