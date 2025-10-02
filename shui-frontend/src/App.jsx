@@ -231,7 +231,7 @@ export default function App() {
             <form onSubmit={onCreate} className="composer-form">
               <textarea
                 className="input text-area"
-                placeholder="Låt oss baka pannkakor!"
+                placeholder="Skriv ditt meddelande här"
                 value={newText}
                 onChange={(e) => setNewText(e.target.value)}
                 rows={6}
